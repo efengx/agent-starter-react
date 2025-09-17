@@ -34,3 +34,20 @@ export interface SandboxConfig {
     | { type: 'boolean'; value: boolean }
     | null;
 }
+
+export interface AgentMetadata {
+  sessionId: string;
+  token: string;
+}
+
+export interface SessionData {
+  session_id: string;
+  url: string;
+  access_token: string;
+}
+
+export interface StartResult {
+  code: number;
+  data: null;
+  message: string;
+}

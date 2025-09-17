@@ -1,0 +1,21 @@
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server
+    command: livekit-server --dev --bind 0.0.0.0
+    ports:
+      - "7880:7880/tcp"
+      - "7880:7880/udp"
+      - "7881:7881/tcp"
+      - "7881:7881/udp"
+      - "7882:7882/tcp"
+    restart: unless-stopped
+    networks:
+      - default
+      - shared-net
+
+networks:
+  default:
+  shared-net:
+    name: shared-network
+    external: true

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+// components/session-view.tsx
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   type AgentState,
@@ -8,6 +9,7 @@ import {
   useRoomContext,
   useVoiceAssistant,
 } from '@livekit/components-react';
+import { ConnectionDetails } from '@/app/api/connection-details/route';
 import { toastAlert } from '@/components/alert-toast';
 import { AgentControlBar } from '@/components/livekit/agent-control-bar/agent-control-bar';
 import { ChatEntry } from '@/components/livekit/chat/chat-entry';
@@ -26,17 +28,19 @@ interface SessionViewProps {
   appConfig: AppConfig;
   disabled: boolean;
   sessionStarted: boolean;
+  connectionDetails: ConnectionDetails | null;
 }
 
 export const SessionView = ({
   appConfig,
   disabled,
   sessionStarted,
+  connectionDetails,
   ref,
 }: React.ComponentProps<'div'> & SessionViewProps) => {
   const { state: agentState } = useVoiceAssistant();
   const [chatOpen, setChatOpen] = useState(false);
-  const { messages, send } = useChatAndTranscription();
+  const { messages, send } = useChatAndTranscription(connectionDetails);
   const room = useRoomContext();
 
   useDebugMode({

@@ -4,6 +4,7 @@ import { Room } from 'livekit-client';
 import { twMerge } from 'tailwind-merge';
 import type { ReceivedChatMessage, TextStreamData } from '@livekit/components-react';
 import { APP_CONFIG_DEFAULTS } from '@/app-config';
+import { ConnectionDetails } from '@/app/api/connection-details/route';
 import type { AppConfig, SandboxConfig } from './types';
 
 export const CONFIG_ENDPOINT = process.env.NEXT_PUBLIC_APP_CONFIG_ENDPOINT;
@@ -75,3 +76,35 @@ export const getAppConfig = cache(async (headers: Headers): Promise<AppConfig> =
 
   return APP_CONFIG_DEFAULTS;
 });
+
+export async function sendTask(connectionDetails: ConnectionDetails | null, text: string) {
+  if (!connectionDetails || !connectionDetails.sessionId || !connectionDetails.token) {
+    console.error('[Front] [sendTask] 无法发送任务：缺少 connectionDetails、sessionId 或 token。');
+    return;
+  }
+
+  console.log(`[Front] [sendTask] 准备向会话 ${connectionDetails.sessionId} 发送任务: "${text}"`);
+
+  try {
+    const response = await fetch('/api/send-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: connectionDetails.sessionId,
+        token: connectionDetails.token,
+        text: text,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || '发送任务失败');
+    }
+
+    console.log(`[Front] [sendTask] 任务 "${text}" 已成功发送。`);
+    const result = await response.json();
+    console.log('[Front] [sendTask] 服务器响应:', result);
+  } catch (error) {
+    console.error('[Front] [sendTask] 发送任务时出错:', error);
+  }
+}
