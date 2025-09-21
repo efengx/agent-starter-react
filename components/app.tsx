@@ -1,8 +1,8 @@
 'use client';
 
 // components/app.tsx
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Participant, Room, RoomEvent } from 'livekit-client';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LogLevel, Participant, Room, RoomEvent, setLogLevel } from 'livekit-client';
 import { motion } from 'motion/react';
 import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
 import { ConnectionDetails } from '@/app/api/connection-details/route';
@@ -13,6 +13,8 @@ import { Welcome } from '@/components/welcome';
 import useConnectionDetails from '@/hooks/useConnectionDetails';
 import type { AppConfig } from '@/lib/types';
 import { FirstxaiHumanView } from './firstxai-human-view';
+
+setLogLevel(LogLevel.warn);
 
 const MotionWelcome = motion.create(Welcome);
 const MotionSessionView = motion.create(SessionView);
@@ -28,6 +30,7 @@ export function App({ appConfig }: AppProps) {
     useConnectionDetails(appConfig);
 
   const [connectionDetails, setConnectionDetails] = useState<ConnectionDetails | null>(null);
+  const pendingConnectionDetailsRef = useRef<ConnectionDetails | null>(null);
   const [isVideoWindowOpen, setIsVideoWindowOpen] = useState(false);
 
   const handleStartCall = useCallback(async () => {
@@ -35,18 +38,13 @@ export function App({ appConfig }: AppProps) {
 
     try {
       const details = await existingOrRefreshConnectionDetails();
-      console.log(`[Front] Connection details received:`, details);
 
-      setConnectionDetails(details);
-      setIsVideoWindowOpen(true);
+      pendingConnectionDetailsRef.current = details;
 
-      console.log(`[Front] [app] 设置麦克风, 并连接到房间`);
       await room.localParticipant.setMicrophoneEnabled(false, undefined, {
         preConnectBuffer: appConfig.isPreConnectBufferEnabled,
       });
       await room.connect(details.serverUrl, details.participantToken);
-
-      console.log('[Front] [app] Successfully connected to the room.');
     } catch (error) {
       console.error('Error during connection process:', error);
       if (error instanceof Error) {
@@ -54,8 +52,9 @@ export function App({ appConfig }: AppProps) {
           title: 'There was an error connecting to the agent',
           description: `${error.name}: ${error.message}`,
         });
-        console.log(`[Front] [app] 如果失败重置组件状态`);
+        console.log(`[${new Date().toLocaleTimeString()}] [Front] [app] 如果失败重置组件状态`);
         setSessionStarted(false);
+        pendingConnectionDetailsRef.current = null;
         setConnectionDetails(null);
         setIsVideoWindowOpen(false);
       }
@@ -64,13 +63,15 @@ export function App({ appConfig }: AppProps) {
 
   useEffect(() => {
     const onDisconnected = () => {
-      console.log('[Front] 与房间断开连接');
+      console.log(`[${new Date().toLocaleTimeString()}] [Front] [app] 与房间断开连接`);
       setSessionStarted(false);
 
-      console.log(`[Front] 准备下一次链接`);
+      console.log(`[${new Date().toLocaleTimeString()}] [Front] [app] 准备下一次链接`);
       refreshConnectionDetails();
+
       setIsVideoWindowOpen(false);
       setConnectionDetails(null);
+      pendingConnectionDetailsRef.current = null;
     };
 
     const onMediaDevicesError = (error: Error) => {
@@ -80,32 +81,32 @@ export function App({ appConfig }: AppProps) {
       });
     };
 
-    console.log(`[Front] [app] 监听参与者连接事件`);
     const onParticipantConnected = (participant: Participant) => {
-      console.log(`[Front] [participant] 检查元数据，判断是否为 agent:`, participant);
-      // if (participant.metadata?.kind === 'agent') {
-      //   console.log('[Front] Agent participant connected:', participant);
-      //   setAgentParticipant(participant);
-      // }
+      console.log(
+        `[${new Date().toLocaleTimeString()}] [Front] [app] 监听参与者连接事件 检查元数据，判断是否为 agent:`,
+        participant
+      );
     };
 
-    console.log(`[Front] [app] 监听参与者断开连接事件`);
     const onParticipantDisconnected = (participant: Participant) => {
-      console.log(`[Front] [participant] 如果断开的是我们存储的 agent，则清空 state:`, participant);
-      // if (participant.metadata?.kind === 'agent') {
-      //   console.log('[Front] Agent participant disconnected.');
-      //   setAgentParticipant(null);
-      // }
+      console.log(
+        `[${new Date().toLocaleTimeString()}] [Front] [app] 监听参与者断开连接事件 如果断开的是我们存储的 agent，则清空 state:`,
+        participant
+      );
     };
 
-    console.log(`[Front] [app] 用户连接成功后，检查房间中是否已有 agent`);
     const onConnected = () => {
+      if (pendingConnectionDetailsRef.current) {
+        setConnectionDetails(pendingConnectionDetailsRef.current);
+        setIsVideoWindowOpen(true);
+        pendingConnectionDetailsRef.current = null;
+      }
+
       room.remoteParticipants.forEach((participant) => {
-        console.log(`[Front] [participant] 遍历房间内所有远程参与者:`, participant);
-        // if (participant.metadata?.kind === 'agent') {
-        //   console.log('[Front] Found existing agent participant in the room:', participant);
-        //   setAgentParticipant(participant);
-        // }
+        console.log(
+          `[${new Date().toLocaleTimeString()}] [Front] [participant] 遍历房间内所有远程参与者:`,
+          participant
+        );
       });
     };
 
@@ -117,9 +118,14 @@ export function App({ appConfig }: AppProps) {
     room.on(RoomEvent.Disconnected, onDisconnected);
 
     return () => {
-      room.disconnect();
-      room.off(RoomEvent.Disconnected, onDisconnected);
+      room.off(RoomEvent.ParticipantConnected, onParticipantConnected);
+      room.off(RoomEvent.ParticipantDisconnected, onParticipantDisconnected);
+      room.off(RoomEvent.Connected, onConnected);
       room.off(RoomEvent.MediaDevicesError, onMediaDevicesError);
+      room.off(RoomEvent.Disconnected, onDisconnected);
+      if (room.state !== 'disconnected') {
+        room.disconnect();
+      }
     };
   }, [room, refreshConnectionDetails]);
 
@@ -159,7 +165,6 @@ export function App({ appConfig }: AppProps) {
       {connectionDetails && (
         <FirstxaiHumanView
           isOpen={isVideoWindowOpen}
-          // onClose={() => setIsVideoWindowOpen(false)}
           serverUrl={connectionDetails.livekitUrl}
           token={connectionDetails.livekitToken}
         />

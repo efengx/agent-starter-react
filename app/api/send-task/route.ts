@@ -4,6 +4,50 @@ import type { StartResult } from '@/lib/types';
 
 // 从环境变量中获取 HeyGen API 的基础 URL
 const NEXT_PUBLIC_BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
+const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY;
+
+/**
+ * 调用 HeyGen 的 keep_alive API 来重置会话的空闲超时。
+ * 这是一个 "即发即忘" (fire-and-forget) 的操作，它不会抛出错误，
+ * 只会在失败时记录警告，以避免中断主流程。
+ * @param sessionId - 需要保持活跃的会话 ID。
+ * @param token - 用于认证的 Bearer Token。
+ */
+// async function resetSessionTimeout(sessionId: string): Promise<void> {
+//   if (!NEXT_PUBLIC_BASE_API_URL || !HEYGEN_API_KEY) {
+//     console.warn(
+//       '[API Warning] 无法调用 keep_alive，因为 NEXT_PUBLIC_BASE_API_URL 和 HEYGEN_API_KEY 未设置。'
+//     );
+//     return;
+//   }
+
+//   try {
+//     console.log(`[API] [send-task] 为会话 ${sessionId} 发送 keep_alive 请求...`);
+//     const response = await fetch(`${NEXT_PUBLIC_BASE_API_URL}/v1/streaming.keep_alive`, {
+//       method: 'POST',
+//       headers: {
+//         'content-type': 'application/json',
+//         'x-api-key': HEYGEN_API_KEY,
+//         accept: 'application/json',
+//       },
+//       body: JSON.stringify({
+//         session_id: sessionId,
+//       }),
+//     });
+
+//     if (response.ok) {
+//       console.log(`[API] [send-task] 会话 ${sessionId} 的 keep_alive 请求成功。`);
+//     } else {
+//       const errorData = await response.json();
+//       console.warn(
+//         `[API] [send-task] [Warning] 会话 ${sessionId} 的 keep_alive 请求失败:`,
+//         errorData
+//       );
+//     }
+//   } catch (error) {
+//     console.warn(`[API] [send-task] [Warning] 调用 keep_alive API 时发生网络错误:`, error);
+//   }
+// }
 
 /**
  * API 路由处理程序，用于发送一个任务（例如文本消息）到 HeyGen 流式会话。
@@ -52,6 +96,8 @@ export async function POST(req: Request) {
     const result: StartResult = await response.json();
     console.log(`[API] 任务已成功发送 (session: ${sessionId}): "${text}"`);
     console.log(`[API] 任务响应:`, result);
+
+    // await resetSessionTimeout(sessionId);
 
     return NextResponse.json(result);
   } catch (error) {

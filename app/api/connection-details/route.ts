@@ -65,8 +65,9 @@ export async function POST(req: Request) {
     // };
 
     const token = await createToken();
+    console.log(`[API] show token:`, token);
     const sessionData: SessionData = await streamingNew(token);
-    console.log(`[API] show sesssionData`);
+    console.log(`[API] show sesssionData:`, sessionData);
     const startText = await streamingStart(token, sessionData);
     console.log(`[API] show startText:`, startText);
 
@@ -99,11 +100,17 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(data, { headers });
   } catch (error) {
-    console.error('[API Error] Failed to get connection details:', error);
+    console.error(
+      `[${new Date().toLocaleTimeString()}] [API Error] Failed to get connection details:`,
+      error
+    );
     if (error instanceof Error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      console.log(`[API] [Error] error.cause:`, error.cause);
-      console.log(`[API] [Error] error.cause.code:`, (error.cause as { code: string }).code);
+      console.log(`[${new Date().toLocaleTimeString()}] [API] [Error] error.cause:`, error.cause);
+      console.log(
+        `[${new Date().toLocaleTimeString()}] [API] [Error] error.cause.code:`,
+        (error.cause as { code: string }).code
+      );
       return NextResponse.json(
         { error: errorMessage },
         { status: 500, statusText: 'Internal Server Error' }

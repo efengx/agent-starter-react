@@ -1,15 +1,69 @@
 services:
-  livekit:
-    image: livekit/livekit-server:latest
-    container_name: livekit-server
-    command: livekit-server --dev --bind 0.0.0.0
+
+  # traefik:
+  #   image: 'traefik:latest'
+  #   container_name: traefik
+  #   restart: unless-stopped
+  #   command:
+  #     - '--log.level=DEBUG'
+  #     - '--api=true'
+  #     - '--api.dashboard=true'
+  #     - '--providers.docker=true'
+  #     - '--providers.docker.exposedbydefault=false'
+  #     - '--entrypoints.web.address=:80'
+  #     - '--entrypoints.websecure.address=:443'
+  #     - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+  #     - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+
+  #     # 移除 mytlschallenge 设置(远程需要开启)
+  #     - '--certificatesresolvers.mytlschallenge.acme.tlschallenge=true'
+  #     - '--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}'
+  #     - '--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json'
+  #   ports:
+  #     - '80:80'
+  #     - '443:443'
+  #     # - '127.0.0.1:1808:8080' # 可以通过 http://<你的服务器IP>:8080/dashboard/ 访问 Dashboard
+  #   volumes:
+  #     - ./data/letsencrypt:/letsencrypt
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   networks:
+  #     - default
+  #     - shared-net
+
+  firstxai-ui:
+    image: registry.cn-hangzhou.aliyuncs.com/rjxai/firstxai-ui:0.0.1
+    container_name: firstxai-ui
     ports:
-      - "7880:7880/tcp"
-      - "7880:7880/udp"
-      - "7881:7881/tcp"
-      - "7881:7881/udp"
-      - "7882:7882/tcp"
+      - "3000:3000"
     restart: unless-stopped
+    env_file:
+      - .env
+    # labels:
+    #   # --- Traefik 基础配置 ---
+    #   - "traefik.enable=true" # 告诉 Traefik 管理这个服务
+    #   - "traefik.docker.network=shared-network" # 明确告诉 Traefik 使用哪个网络与此容器通信
+
+    #   # --- HTTP 到 HTTPS 自动跳转 ---
+    #   - "traefik.http.routers.firstxai-ui-http.rule=Host(`xilabs.ofengx.com`)"
+    #   - "traefik.http.routers.firstxai-ui-http.entrypoints=web"
+    #   - "traefik.http.routers.firstxai-ui-http.middlewares=redirect-to-https"
+    #   - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+    #   # --- HTTPS 路由配置 ---
+    #   - "traefik.http.routers.firstxai-ui-https.rule=Host(`xilabs.ofengx.com`)"
+    #   - "traefik.http.routers.firstxai-ui-https.entrypoints=websecure"
+    #   - "traefik.http.routers.firstxai-ui-https.tls=true"
+    #   - "traefik.http.routers.firstxai-ui-https.tls.certresolver=mytlschallenge"
+    #   - "traefik.http.routers.firstxai-ui-https.middlewares=firstxai-ui-secure-headers"
+      
+    #   - "traefik.http.middlewares.firstxai-ui-secure-headers.headers.STSSeconds=315360000"
+    #   - "traefik.http.middlewares.firstxai-ui-secure-headers.headers.browserXSSFilter=true"
+    #   - "traefik.http.middlewares.firstxai-ui-secure-headers.headers.contentTypeNosniff=true"
+    #   - "traefik.http.middlewares.firstxai-ui-secure-headers.headers.forceSTSHeader=true"
+    #   - "traefik.http.middlewares.firstxai-ui-secure-headers.headers.STSIncludeSubdomains=true"
+    #   - "traefik.http.middlewares.firstxai-ui-secure-headers.headers.STSPreload=true"
+      
+    #   - "traefik.http.services.firstxai-ui.loadbalancer.server.port=3000"
     networks:
       - default
       - shared-net

@@ -54,11 +54,20 @@ export const SessionView = ({
   useEffect(() => {
     if (sessionStarted) {
       const timeout = setTimeout(() => {
+        console.log(
+          `[${new Date().toLocaleTimeString()}] [Front] [SessionView] agentState:`,
+          agentState
+        );
+        console.log(
+          `[${new Date().toLocaleTimeString()}] [Front] [SessionView] !isAgentAvailable(agentState):`,
+          !isAgentAvailable(agentState)
+        );
         if (!isAgentAvailable(agentState)) {
           const reason =
             agentState === 'connecting'
               ? 'Agent did not join the room. '
               : 'Agent connected but did not complete initializing. ';
+          console.log(`[Front] [session-view] reason:`, reason);
 
           toastAlert({
             title: 'Session ended',

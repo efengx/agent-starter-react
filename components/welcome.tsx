@@ -48,10 +48,10 @@ export const Welcome = ({
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://docs.livekit.io/agents/start/voice-ai/"
+            href="https://blog.ofengx.com/en/"
             className="underline"
           >
-            Voice AI quickstart
+            xilabs AI quickstart
           </a>
           .
         </p>

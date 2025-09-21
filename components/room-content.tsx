@@ -19,7 +19,7 @@ export function RoomContent() {
 
     const onTrackSubscribed = (track: Track) => {
       console.log(
-        `[INFO] 轨道已订阅。当本地参与者成功订阅了一个远程轨道后触发。一旦这个事件触发，你就可以获取到 RemoteTrack 对象，并将其附加到页面的 <video> 或 <audio> 元素上进行播放。`
+        `[Front] [room-content] 轨道已订阅。当本地参与者成功订阅了一个远程轨道后触发。一旦这个事件触发，你就可以获取到 RemoteTrack 对象，并将其附加到页面的 <video> 或 <audio> 元素上进行播放。`
       );
 
       if (track.kind === 'video' || track.kind === 'audio') {

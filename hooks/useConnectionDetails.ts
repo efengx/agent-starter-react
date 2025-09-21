@@ -41,13 +41,19 @@ export default function useConnectionDetails(appConfig: AppConfig) {
 
       if (!res.ok) {
         const errorData = await res.json();
-        console.log(`[Front] [useConnectionDetails] errorData:`, errorData);
+        console.log(
+          `[${new Date().toLocaleTimeString()}] [Hook] [useConnectionDetails] errorData:`,
+          errorData
+        );
         throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
       }
 
       const data: ConnectionDetails = await res.json();
       setConnectionDetails(data);
-      console.log(`[Front] useConnectionDetails:`, data);
+      console.log(
+        `[${new Date().toLocaleTimeString()}] [Hook] [useConnectionDetails] useConnectionDetails:`,
+        data
+      );
       return data;
     } catch (error) {
       console.error('Error fetching connection details:', error);
@@ -55,7 +61,7 @@ export default function useConnectionDetails(appConfig: AppConfig) {
     }
   }, [appConfig.agentName, appConfig.sandboxId]);
 
-  // 移除自动加载
+  // 移除自动加载, 自动加载会导致循环加载事件
   // useEffect(() => {
   //   fetchConnectionDetails();
   // }, [fetchConnectionDetails]);
