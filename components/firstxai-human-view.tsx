@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Room } from 'livekit-client';
-import { RoomContext } from '@livekit/components-react';
+import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import { FxRoomContent } from './fx-room-content';
 
 interface FirstxaiHumanViewProps {
@@ -64,6 +64,7 @@ export function FirstxaiHumanView({ isOpen, serverUrl, token }: FirstxaiHumanVie
       </div>
 
       <RoomContext.Provider value={connectedRoom}>
+        <RoomAudioRenderer />
         <FxRoomContent />
       </RoomContext.Provider>
     </div>
