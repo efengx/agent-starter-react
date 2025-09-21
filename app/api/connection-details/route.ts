@@ -107,10 +107,10 @@ export async function POST(req: Request) {
     if (error instanceof Error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       console.log(`[${new Date().toLocaleTimeString()}] [API] [Error] error.cause:`, error.cause);
-      console.log(
-        `[${new Date().toLocaleTimeString()}] [API] [Error] error.cause.code:`,
-        (error.cause as { code: string }).code
-      );
+      // console.log(
+      //   `[${new Date().toLocaleTimeString()}] [API] [Error] error.cause.code:`,
+      //   (error.cause as { code: string }).code
+      // );
       return NextResponse.json(
         { error: errorMessage },
         { status: 500, statusText: 'Internal Server Error' }
@@ -181,7 +181,7 @@ async function streamingNew(heygenToken: string): Promise<SessionData> {
       Authorization: `Bearer ${heygenToken}`,
     },
     body: JSON.stringify({
-      quality: 'medium',
+      quality: 'low',
       avatar_name: HEYGEN_AVATAR_ID,
       version: 'v2',
       activity_idle_timeout: 120,

@@ -38,6 +38,8 @@ export const SessionView = ({
   connectionDetails,
   ref,
 }: React.ComponentProps<'div'> & SessionViewProps) => {
+  console.log(`[${new Date().toLocaleTimeString()}] [Front] [SessionView] 渲染`);
+
   const { state: agentState } = useVoiceAssistant();
   const [chatOpen, setChatOpen] = useState(false);
   const { messages, send } = useChatAndTranscription(connectionDetails);
